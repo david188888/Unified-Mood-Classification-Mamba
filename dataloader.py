@@ -236,7 +236,8 @@ class MTGJamendoDataset(Dataset):
     ):
         self.split = split
         base_dir = os.path.dirname(os.path.abspath(__file__))
-        self.label_path = label_path or os.path.join(base_dir, "data", "MTG-Jamendo", "mtg_split_labels.csv")
+        # Default to the curated subset CSV (generated from train/val/test folders)
+        self.label_path = label_path or os.path.join(base_dir, "data", "MTG-Jamendo", "mtg_labels.csv")
         self.audio_root = audio_root or os.path.join(base_dir, "data", "MTG-Jamendo")
         self.model_dir = model_dir
         self.mood_tags = self._load_tags()
@@ -287,15 +288,13 @@ class MTGJamendoDataset(Dataset):
                 parts = line.strip().split(",")
                 if len(parts) < 7:
                     continue
-                split, track_id, _, _, _, mood_tags_str, _ = parts
+                split, track_id, _, _, _, mood_tags_str, audio_path_rel = parts
                 track_id = int(track_id)
                 if split != self.split:
                     continue
 
-                # Build audio path: data/MTG-Jamendo/{track_id%100}/{track_id}.low.mp3
-                audio_subdir = f"{track_id % 100:02d}"
-                audio_filename = f"{track_id}.low.mp3"
-                audio_path = os.path.join(self.audio_root, audio_subdir, audio_filename)
+                # Use audio_path from CSV (e.g., train/track_0000948.low.mp3)
+                audio_path = os.path.join(self.audio_root, audio_path_rel)
 
                 # Skip if audio file doesn't exist
                 if not os.path.exists(audio_path):
